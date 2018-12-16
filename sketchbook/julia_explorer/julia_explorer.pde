@@ -1,11 +1,16 @@
 PImage juliaImg;
 PImage cloudImg;
+ArrayList<Integer> mouseXHistory;
+ArrayList<Integer> mouseYHistory;
 
 void setup() {
   size(1200, 900);
   juliaImg = createImage(width, height, ARGB);
   cloudImg = createImage(width, height, ARGB);
-  frameRate(20);
+  //frameRate(20);
+
+  mouseXHistory = new ArrayList<Integer>();
+  mouseYHistory = new ArrayList<Integer>();
 }
 
 //float cX = -0.7;
@@ -15,8 +20,36 @@ float cY = 0.0001;
 float zx, zy;
 float maxIter = 100;
 
+float lastCX = 0;
+float lastCY = 0;
+float lastMaxIter = 0;
+
+float average(ArrayList<Integer> list) {
+  float sum = 0;
+
+  for (Integer item : list) {
+    sum += item;
+  }
+
+  return sum / list.size();
+}
+
+
 void draw() {
-  println("Mouse: " + mouseX + "," + mouseY);
+  mouseXHistory.add(mouseX);
+  mouseYHistory.add(mouseY);
+  if (mouseXHistory.size() > frameRate) {
+    mouseXHistory.remove(frameRate);
+    mouseYHistory.remove(frameRate);
+  }
+
+  float dx = mouseX - pmouseX;
+  float dy = mouseY - pmouseY;
+  float dist = sqrt((dx * dx) + (dy * dy));
+
+  println("Mouse: " + mouseX + "," + mouseY + " delta: " + dist);
+  //maxIter = max(3000 / max(dist * dist, 10), 40);
+  println(maxIter);
   background(0);
   //loadPixels();
   PImage j = julia();
@@ -24,9 +57,8 @@ void draw() {
 
   image(j, 0, 0);
   //blur();
-  blend(c, 0, 0, width, height, 0, 0, width, height, MULTIPLY);
+  //blend(c, 0, 0, width, height, 0, 0, width, height, SCREEN);
   updatePixels();
-
 }
 
 PImage julia() {
@@ -35,6 +67,9 @@ PImage julia() {
 
   cX = -0.7 + 0.1 * sin(mouseX * 0.005);
   cY = 0.35 + 0.01 * sin(mouseY * 0.001);
+  if (lastCX == cX && lastCY == cY && lastMaxIter == maxIter) {
+    return img;
+  }
 
   for (int x = 0; x < width; x++) {
     for (int y = 0; y < height; y++) {
@@ -52,6 +87,10 @@ PImage julia() {
     }
   }
   
+  lastCX = cX;
+  lastCY = cY;
+  lastMaxIter = maxIter;
+
   img.updatePixels();
   return img;
 }
